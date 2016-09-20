@@ -1,29 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import random
+import random, sys
 
-def create_board():
-    return list([" " for i in range(1,10)])
+def boards():
+    return list(range(1,10)), list([" " for i in range(1,10)])
 
 def get_players():
-    p1 = raw_input("Jogador 1: ")
-    p2 = raw_input("Jogador 2: ")
+    p1 = raw_input("Jogador 1: ").upper()
+    p2 = raw_input("Jogador 2: ").upper()
 
     return [p1, p2]
 
 def print_board(board):
-    print "   {0}   |   {1}   |   {2}   ".format(board[0], board[1], board[2])
-    print "{0}|{0}|{0}".format("-" * 7)
-    print "   {0}   |   {1}   |   {2}   ".format(board[3], board[4], board[5])
-    print "{0}|{0}|{0}".format("-" * 7)
-    print "   {0}   |   {1}   |   {2}   ".format(board[6], board[7], board[8])
+    print '''
+    {}   |   {}   |   {}
+  ----- + ----- + -----
+    {}   |   {}   |   {}
+  ----- + ----- + -----
+    {}   |   {}   |   {}
+    '''.format(board[0], board[1], board[2], board[3], board[4], board[5], board[6], board[7], board[8])
 
 def how_to_play():
-    board = list(range(1,10))
-    print_board(board)
+    print '''
+    1   |   2   |   3
+  ----- + ----- + -----
+    4   |   5   |   6
+  ----- + ----- + -----
+    7   |   8   |   9
+    '''
 
-def verify_input(user_input, board):
+def verify_input(user_input):
     position = 0
 
     try:
@@ -42,27 +49,55 @@ def verify_input(user_input, board):
     return position
 
 def who_wins(board):
+    if board[0] == board[1] and board[1] == board[2]:
+        return True
+    if board[3] == board[4] and board[4] == board[5]:
+        return True
+    if board[6] == board[7] and board[7] == board[8]:
+        return True
+    if board[0] == board[3] and board[3] == board[6]:
+        return True
+    if board[1] == board[4] and board[4] == board[7]:
+        return True
+    if board[2] == board[5] and board[5] == board[8]:
+        return True
+    if board[0] == board[4] and board[4] == board[8]:
+        return True
+    if board[2] == board[4] and board[4] == board[6]:
+        return True
+
     return False
 
-def move(position, symb):
-    pos = position - 1
+def verify_position(user_input):
+    position = (user_input - 1)
 
-    if board[pos] != " ":
+    if board[position] == "X" or board[position] == "O":
         print "Ops! O amiguinho já jogou aí!"
         return False
 
-    board[pos] = symb
     return True
 
+def move(board, user_board, position, symb):
+    pos = position - 1
+    board[pos] = symb
+    user_board[pos] = symb
+
+
+def end_game():
+    sys.exit(1)
+
 if __name__ == "__main__":
-    # criando tabuleiro
-    board = create_board()
+    # variaveis de loop game and playing
+    playing = True
+
+    # criando tabuleiros
+    board, user_board = boards()
 
     # pegando os jogadores
     players = get_players()
 
     # imprimindo o tabuleiro e como jogar
-    print "Let's play!"
+    print "\n\nLet's play!\n\n".upper()
     how_to_play()
 
     # randomizando a ordem de jogada
@@ -75,35 +110,45 @@ if __name__ == "__main__":
     symbols = ["X", "O"]
 
     # imprimido ordem para o jogadores
-    print "Jogador {0} é {1}".format(players[0], symbols[0])
-    print "Jogador {0} é {1}".format(players[1], symbols[1])
+    print "\n\n* Jogador {0} é {1}".format(players[0], symbols[0])
+    print "* Jogador {0} é {1}\n\n".format(players[1], symbols[1])
 
-    i = 0
+    turn = 0
     while True:
-        i += 1
-        print "Turno #{0}. ('h' para Help / 's' para imprimir tabuleiro)".format(i)
+        for i, player in enumerate(players):
+            playing = True
+            turn += 1
 
-        for j, player in enumerate(players):
-            while True:
-                user_input = raw_input("{0}: ".format(player)).rstrip('\n')
+            if turn >= 10:
+                print "Não houve ganhador, deu velha!"
+                end_game()
+
+            while playing:
+                print "Turno #{0}\t\t(h help | s board)".format(turn)
+
+                user_input = raw_input("{0}: ".format(player).rstrip('\n'))
 
                 if user_input == "h":
                     how_to_play()
                     continue
 
                 if user_input == "s":
-                    print_board(board)
+                    print_board(user_board)
                     continue
 
-                position = verify_input(user_input, board)
+                position = verify_input(user_input)
+                position_valid  = verify_position(position)
 
-                if position == 0:
+                if not position or not position_valid:
+                    print ""
                     how_to_play()
                     continue
 
-                if move(position, symbols[j]):
-                    print_board(board)
-                    break
+                move(board, user_board, position, symbols[i])
+                print_board(user_board)
 
-        if who_wins(board):
-            continue
+                if who_wins(board):
+                    print "Jogador {0} ganhou, parabéns!".format(player)
+                    end_game()
+                else:
+                    playing = False
